@@ -94,21 +94,11 @@ Multiple seeds can be configured as:
 
 ## Usage
 
-Install the dependencies, then save the main script as:
 
-    main.py
+The notebooks for the previous experiment featuring reconstruction, boundry, distillation, and segmentation loss can be found in the v1 folder.
+The code for current experiments may be found in v2 folder.
 
-Run:
-
-    python main.py
-
-Results are saved to:
-
-    outputs/experiment_c_results.csv
-
-Checkpoints are saved to:
-
-    checkpoints/
+*after deciding the best path for research, this section will be updated*
 
 ## Metrics
 
