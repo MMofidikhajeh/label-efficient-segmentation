@@ -98,7 +98,7 @@ Multiple seeds can be configured as:
 The notebooks for the previous experiment featuring reconstruction, boundry, distillation, and segmentation loss can be found in the v1 folder.
 The code for current experiments may be found in v2 folder.
 
-*after deciding the best path for research, this section will be updated*
+*after deciding the best path for research, this section will be updated.*
 
 ## Metrics
 
