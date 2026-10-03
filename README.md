@@ -1,133 +1,130 @@
-<a id="readme-top"></a>
+# Label-Efficient Segmentation with DINOv2 Distillation
 
+This repository contains an ongoing research project on label-efficient binary segmentation using a ConvNeXt-Tiny encoder with a U-Net-style decoder, optional lightweight denoising reconstruction, and direct feature distillation from a frozen DINOv2 teacher.
 
-[![LinkedIn][linkedin-shield]][linkedin-url]
+The main research question is whether auxiliary self-supervised signals can improve segmentation performance when only a small fraction of training images have pixel-level labels.
 
-<h3 align="center">U-Net for Image Reconstruction with Knowledge Distillation</h3>
+## Current Focus
 
-  <p align="center">
-    A PyTorch implementation of U-Net for simultaneous image reconstruction and segmentation using knowledge distillation and composite loss functions.
-    <br />
-    <br />
-    <br />
-  </p>
-</div>
+The current training pipeline focuses on:
 
-<!-- TABLE OF CONTENTS -->
-<details>
-  <summary>Table of Contents</summary>
-  <ol>
-    <li>
-      <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
-    <li><a href="#installation">Installation</a></li>
-    <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
-  </ol>
-</details>
+- Semi-supervised / label-efficient segmentation
+- Direct DINOv2 feature distillation
+- Lightweight denoising reconstruction as an auxiliary regularizer
+- Evaluation under limited label fractions
+- Oxford-IIIT Pet for diagnostic experiments
+- ISIC as the target dataset for the main experiments
 
-## About The Project
-This project implements a sophisticated U-Net architecture that simultaneously performs image reconstruction and segmentation using a novel composite loss function. The model leverages knowledge distillation by incorporating features from a pre-trained VGG11 teacher network to guide the learning process. A key innovation is the multi-component loss function that combines reconstruction error (MSE), feature distillation loss, and fuzzy normalized cut loss for segmentation regularization. Trained on CIFAR-10, the system demonstrates strong performance with a PSNR of 23.23 dB and SSIM of 0.859, showcasing effective dual-task learning where a single model learns to both reconstruct input images and produce segmentation masks through an end-to-end differentiable pipeline.
+Boundary loss has been removed from the current pipeline after experiments showed that it destabilized training and reduced segmentation performance.
 
+## Method Overview
 
-### Features
+The model predicts:
 
-- **Dual-task U-Net**: Performs both segmentation and reconstruction
-- **Knowledge Distillation**: Uses pre-trained VGG11 as teacher model
-- **Composite Loss**: Combines reconstruction, distillation, and fuzzy normalized cut losses
-- **Multi-modal Output**: Generates both segmentation masks and reconstructed images
+1. A binary segmentation map.
+2. An optional reconstructed RGB image.
 
-### Results
-(After 10 epochs)
-**Test Metrics:**
-- PSNR: 23.23 dB
-- SSIM: 0.859
-- MSE: 0.0048
+During training:
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+- The segmentation loss is applied only to labeled images.
+- The reconstruction loss is applied to all images.
+- The DINOv2 distillation loss is applied to all images.
+- Stronger photometric perturbations are applied to the model input.
+- The reconstruction target remains clean and spatially aligned with the input.
 
+The segmentation loss combines Dice and BCE.
 
-## Built With
-* Python
-   + Numpy
-   + Pandas
-   + Scikit-Learn
-   + Matplotlib
-   + Pytorch
+## Supported Datasets
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+### Oxford-IIIT Pet
 
+Oxford-IIIT Pet is used for diagnostic experiments and is downloaded automatically.
 
+To use it, set:
 
-## Installation
-1. First intall jupyter notebook from the link below if you haven't already.
-   + https://jupyter.org/install
-2. Make sure you have all the libraries mentioned in Built With section installed; If not first run your environment then use the following commands:
-+ ```console
-  pip install torch torchvision torchmetrics
-  ```
+    DATASET = "oxford"
 
-3. Run the notebook.
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+### ISIC
 
+ISIC is intended for the main label-efficiency experiments.
 
+To use ISIC, place the data in the following structure:
 
-<!-- CONTRIBUTING -->
-## Contributing
+    data/ISIC/images/*.jpg
+    data/ISIC/masks/*.png
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+Mask filenames should match image filenames, for example:
 
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
-Don't forget to give the project a star! Thanks again!
+    data/ISIC/images/ISIC_0000000.jpg
+    data/ISIC/masks/ISIC_0000000.png
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+Common mask filename variants such as the following are also supported:
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+    ISIC_0000000_segmentation.png
+    ISIC_0000000_mask.png
 
+Then set:
 
-<!-- LICENSE -->
-## License
+    DATASET = "isic"
 
-Distributed under the MIT License. See `LICENSE.txt` for more information.
+## Current Experiments
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+The current experiment suite evaluates the effect of lightweight reconstruction under limited labels.
 
+Configs include:
 
+- Segmentation-only baseline
+- Segmentation + reconstruction with weight 0.010
+- Segmentation + reconstruction with weight 0.005
+- Segmentation + DINOv2 distillation
+- Segmentation + DINOv2 distillation + reconstruction with weight 0.010
+- Segmentation + DINOv2 distillation + reconstruction with weight 0.005
 
-<!-- CONTACT -->
-## Contact
-Mohammad Mofidi
-* Email: mohammad.mofidi.k@gmail.com
-* Linkedin: https://www.linkedin.com/in/mohammad-mofidi-khajeh-2715832b8/
-* Instagram: https://www.instagram.com/_mohammadmofidi/
+Label fractions are configurable. For example:
 
+    LABEL_FRACTIONS = [0.10]
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+For a fuller low-label study, use:
 
+    LABEL_FRACTIONS = [0.02, 0.05, 0.10]
 
+Multiple seeds can be configured as:
 
-<!-- MARKDOWN LINKS & IMAGES -->
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
+    SEEDS = [42, 43, 44]
 
-[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
-[linkedin-url]: https://www.linkedin.com/in/mohammad-mofidikhajeh
+## Usage
 
+Install the dependencies, then save the main script as:
 
+    main.py
 
+Run:
 
+    python main.py
 
+Results are saved to:
 
+    outputs/experiment_c_results.csv
 
+Checkpoints are saved to:
 
+    checkpoints/
 
+## Metrics
 
+The repository reports:
 
+- IoU
+- Dice
+- SSIM, PSNR, and LPIPS for reconstruction-enabled models
 
-  
+## Project Status
+
+This project is under active development.
+
+Current priorities:
+
+1. Determine whether very lightweight reconstruction helps segmentation.
+2. Move the main experiments to ISIC.
+3. Evaluate DINOv2 distillation under stronger label scarcity.
+4. Add additional baselines and statistical evaluation over multiple seeds.
